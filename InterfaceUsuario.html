@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ficha Cadastral e Análise de Crédito - Locação</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="regras_locacao.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+
+        .form-section {
+            @apply bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6;
+        }
+
+        .section-title {
+            @apply text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2 border-b pb-2;
+        }
+
+        .input-group {
+            @apply flex flex-col gap-1;
+        }
+
+        .input-label {
+            @apply text-sm font-medium text-gray-700;
+        }
+
+        .input-field {
+            @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors text-sm;
+        }
+
+        .btn-primary {
+            @apply w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-md transition duration-200 flex items-center justify-center gap-2;
+        }
+
+        /* Custom Checkbox */
+        .checkbox-wrapper {
+            @apply flex items-center gap-2 cursor-pointer;
+        }
+
+        /* Modal Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-animate {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-10">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 text-white p-2 rounded-lg">
+                    <i class="fa-solid fa-house-chimney text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-gray-800">ImobSystem</h1>
+                    <p class="text-xs text-gray-500">Análise de Crédito e Locação</p>
+                </div>
+            </div>
+            <div class="hidden md:block">
+                <span
+                    class="bg-green-100 text-green-800 text-xs font-semibold px-2.5 py-0.5 rounded border border-green-400">Ambiente
+                    Seguro <i class="fa-solid fa-lock ml-1"></i></span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+
+        <form id="rentalForm" onsubmit="handleSubmit(event)">
+
+            <!-- Introdução -->
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 mb-6 rounded-r">
+                <p class="text-sm text-blue-800">
+                    <strong>Prezado(a),</strong> preencha este formulário com atenção. As informações serão utilizadas
+                    para a análise de crédito (SPC/Serasa) e confecção do contrato de locação. Campos marcados com <span
+                        class="text-red-500">*</span> são obrigatórios.
+                </p>
+            </div>
+
+            <!-- Seção 1: Dados do Imóvel -->
+            <section class="form-section">
+                <h2 class="section-title text-blue-700">
+                    <i class="fa-solid fa-location-dot"></i> 1. Dados do Imóvel Pretendido
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="input-group md:col-span-3">
+                        <label class="input-label">Endereço Completo ou Código do Imóvel <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" class="input-field"
+                            placeholder="Ex: Rua das Flores, 123, Centro - Código REF-2024" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Valor do Aluguel (R$) <span class="text-red-500">*</span></label>
+                        <input type="text" class="input-field money" placeholder="0,00" required
+                            onkeyup="formatCurrency(this)">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Valor do Condomínio (R$)</label>
+                        <input type="text" class="input-field money" placeholder="0,00" onkeyup="formatCurrency(this)">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Finalidade</label>
+                        <select class="input-field">
+                            <option>Residencial</option>
+                            <option>Comercial</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção 2: Locatário -->
+            <section class="form-section">
+                <h2 class="section-title text-blue-700">
+                    <i class="fa-solid fa-user"></i> 2. Dados do Locatário (Inquilino)
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="input-group md:col-span-2">
+                        <label class="input-label">Nome Completo <span class="text-red-500">*</span></label>
+                        <input type="text" class="input-field" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">CPF <span class="text-red-500">*</span></label>
+                        <input type="text" class="input-field" placeholder="000.000.000-00" maxlength="14"
+                            oninput="maskCPF(this)" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">RG / Órgão Expedidor</label>
+                        <input type="text" class="input-field" placeholder="Ex: 12.345.678-9 SSP/SP">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Data de Nascimento <span class="text-red-500">*</span></label>
+                        <input type="date" class="input-field" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Estado Civil <span class="text-red-500">*</span></label>
+                        <select class="input-field" required>
+                            <option value="">Selecione...</option>
+                            <option>Solteiro(a)</option>
+                            <option>Casado(a)</option>
+                            <option>Divorciado(a)</option>
+                            <option>Viúvo(a)</option>
+                            <option>União Estável</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Celular / WhatsApp <span class="text-red-500">*</span></label>
+                        <input type="tel" class="input-field" placeholder="(00) 00000-0000" maxlength="15"
+                            oninput="maskPhone(this)" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">E-mail <span class="text-red-500">*</span></label>
+                        <input type="email" class="input-field" placeholder="seu@email.com" required>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção 3: Análise Financeira -->
+            <section class="form-section border-l-4 border-l-green-500">
+                <h2 class="section-title text-green-700">
+                    <i class="fa-solid fa-chart-line"></i> 3. Análise Financeira e Crédito
+                </h2>
+                <p class="text-xs text-gray-500 mb-4">Estas informações são fundamentais para a aprovação do cadastro.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="input-group">
+                        <label class="input-label">Profissão / Cargo <span class="text-red-500">*</span></label>
+                        <input type="text" class="input-field" required>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Vínculo Empregatício</label>
+                        <select class="input-field">
+                            <option>CLT (Carteira Assinada)</option>
+                            <option>Autônomo / Profissional Liberal</option>
+                            <option>Empresário</option>
+                            <option>Funcionário Público</option>
+                            <option>Aposentado / Pensionista</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Renda Mensal Comprovada (R$) <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" class="input-field money" placeholder="0,00" required
+                            onkeyup="formatCurrency(this)">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Outras Rendas (R$)</label>
+                        <input type="text" class="input-field money" placeholder="0,00" onkeyup="formatCurrency(this)">
+                    </div>
+
+                    <div class="md:col-span-2 border-t border-gray-100 pt-4 mt-2">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-2">Histórico de Crédito</h3>
+                        <div class="flex flex-col gap-2">
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox"
+                                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                <span class="text-sm text-gray-600">Possui restrições no SPC/Serasa?</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox"
+                                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                <span class="text-sm text-gray-600">Possui imóvel próprio?</span>
+                            </label>
+                            <label class="checkbox-wrapper">
+                                <input type="checkbox"
+                                    class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                <span class="text-sm text-gray-600">Possui veículo próprio quitado?</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção 4: Garantia -->
+            <section class="form-section">
+                <h2 class="section-title text-blue-700">
+                    <i class="fa-solid fa-shield-halved"></i> 4. Modalidade de Garantia
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
+                    <div class="input-group">
+                        <label class="input-label">Qual garantia será apresentada?</label>
+                        <select class="input-field" id="garantiaSelect" onchange="toggleFiador()">
+                            <option value="fiador">Fiador (Pessoa Física)</option>
+                            <option value="caucao">Caução (Depósito de 3 meses)</option>
+                            <option value="seguro">Seguro Fiança</option>
+                            <option value="titulo">Título de Capitalização</option>
+                        </select>
+                    </div>
+
+                    <!-- Dados do Fiador (Condicional) -->
+                    <div id="fiadorSection" class="bg-gray-50 p-4 rounded border border-gray-200 mt-2">
+                        <h3 class="text-sm font-bold text-gray-700 mb-3 border-b pb-1">Dados do Fiador</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="input-group md:col-span-2">
+                                <label class="input-label">Nome do Fiador</label>
+                                <input type="text" class="input-field">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">CPF do Fiador</label>
+                                <input type="text" class="input-field" oninput="maskCPF(this)">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Renda do Fiador (R$)</label>
+                                <input type="text" class="input-field money" onkeyup="formatCurrency(this)">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Seção 5: Dados do Locador (Proprietário) -->
+            <section class="form-section bg-slate-50 border-slate-300">
+                <h2 class="section-title text-slate-700">
+                    <i class="fa-solid fa-key"></i> 5. Dados do Locador (Proprietário)
+                </h2>
+                <p class="text-xs text-gray-500 mb-4">Preencher apenas se você for o proprietário cadastrando o imóvel
+                    ou se tiver os dados para contrato.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="input-group md:col-span-2">
+                        <label class="input-label">Nome Completo do Proprietário</label>
+                        <input type="text" class="input-field" placeholder="Nome do dono do imóvel">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">CPF/CNPJ</label>
+                        <input type="text" class="input-field" oninput="maskCPF(this)">
+                    </div>
+                    <div class="input-group">
+                        <label class="input-label">Dados Bancários para Repasse</label>
+                        <input type="text" class="input-field" placeholder="Banco, Agência e Conta / PIX">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Upload de Documentos -->
+            <section class="form-section">
+                <h2 class="section-title text-blue-700">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> 6. Documentos
+                </h2>
+                <div
+                    class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-blue-50 transition-colors cursor-pointer">
+                    <i class="fa-solid fa-file-pdf text-3xl text-gray-400 mb-2"></i>
+                    <p class="text-sm text-gray-600 font-medium">Clique para anexar documentos (RG, CPF, Comprovante de
+                        Renda)</p>
+                    <p class="text-xs text-gray-400 mt-1">Formatos aceitos: PDF, JPG, PNG (Máx 5MB)</p>
+                    <input type="file" class="hidden">
+                </div>
+            </section>
+
+            <!-- Termos e Botão -->
+            <div class="mb-8">
+                <label class="flex items-start gap-3 cursor-pointer mb-6">
+                    <input type="checkbox" required
+                        class="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                    <span class="text-sm text-gray-600">
+                        Declaro que as informações prestadas são verdadeiras e autorizo a consulta do meu CPF nos órgãos
+                        de proteção ao crédito (SPC/Serasa) para fins de análise cadastral, conforme a Lei Geral de
+                        Proteção de Dados (LGPD).
+                    </span>
+                </label>
+
+                <button type="submit" class="btn-primary shadow-lg shadow-blue-500/30" onclick="Debug()">
+                    <i class="fa-solid fa-paper-plane"></i> Enviar Ficha para Análise
+                </button>
+            </div>
+
+        </form>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-gray-400 py-8 text-center text-sm">
+        <p>&copy; 2024 ImobSystem - Sistema de Gestão Imobiliária.</p>
+    </footer>
+
+    <!-- Modal de Sucesso -->
+    <div id="successModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden modal-animate">
+        <div class="bg-white rounded-lg p-8 max-w-sm w-full text-center shadow-2xl relative">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fa-solid fa-check text-2xl text-green-600"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Formulário Enviado!</h3>
+            <p class="text-gray-600 text-sm mb-6">Seus dados foram recebidos com segurança. Nossa equipe iniciará a
+                análise de crédito e entrará em contato em até 24 horas.</p>
+            <button onclick="closeModal()"
+                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded transition">
+                Fechar
+            </button>
+        </div>
+    </div>
+
+    <!-- Scripts JavaScript -->
+    <script>
+        // Função para formatar Moeda (R$)
+        function formatCurrency(input) {
+            let value = input.value.replace(/\D/g, '');
+            value = (value / 100).toFixed(2) + '';
+            value = value.replace(".", ",");
+            value = value.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+            input.value = "R$ " + value;
+        }
+
+        // Máscara de CPF
+        function maskCPF(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d)/, "$1.$2");
+            value = value.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+            input.value = value;
+        }
+
+        // Máscara de Telefone
+        function maskPhone(input) {
+            let value = input.value.replace(/\D/g, '');
+            if (value.length > 11) value = value.slice(0, 11);
+            value = value.replace(/^(\d{2})(\d)/g, "($1) $2");
+            value = value.replace(/(\d)(\d{4})$/, "$1-$2");
+            input.value = value;
+        }
+
+        // Lógica para mostrar/esconder seção do fiador
+        function toggleFiador() {
+            const select = document.getElementById('garantiaSelect');
+            const section = document.getElementById('fiadorSection');
+            if (select.value === 'fiador') {
+                section.classList.remove('hidden');
+            } else {
+                section.classList.add('hidden');
+            }
+        }
+
+        function extractFormData() {
+            const form = document.getElementById('rentalForm');
+            if (!form) {
+                console.error("Formulário 'rentalForm' não encontrado.");
+                return {};
+            }
+
+            const formData = {};
+
+            // Função auxiliar para sanitizar chaves (remover acentos, espaços e caracteres especiais)
+            const sanitizeKey = (text) => {
+                if (!text) return '';
+                return text
+                    .toLowerCase()
+                    .replace(/ /g, '_')
+                    .replace(/[^\w\d_]/g, '') // Remove caracteres não alfanuméricos exceto _
+                    .replace(/r\$/g, 'valor') // Corrige "R$" para "valor"
+                    .replace(/locatario_inquilino/g, 'locatario');
+            };
+
+            const infodict = {}
+            form.querySelectorAll('div').forEach(e => {
+                if (e.classList.contains("input-group")) {
+                    const entry = e;
+                    const input = entry.querySelector("input")
+                    const label = entry.querySelector("label")
+                    const select = entry.querySelector("select")
+                    infodict[sanitizeKey(label.innerText)] = (!input ? select.options[select.selectedIndex].text || "" : input.value)
+                }
+            })
+
+            // 1. Dados do Imóvel
+            formData.imovel = {
+                endereco_codigo: infodict["endereo_completo_ou_cdigo_do_imvel_"],
+                valor_aluguel: infodict["valor_do_aluguel_r_"],
+                valor_condominio: infodict["valor_do_condomnio_r"],
+                finalidade: infodict["finalidade"],
+            };
+
+            // 2. Dados do Locatário
+            formData.locatario = {
+                nome_completo: infodict["nome_completo_"],
+                cpf: infodict["cpf_"],
+                rg_orgao_expedidor: infodict["rg__rgo_expedidor"],
+                data_nascimento: infodict["data_de_nascimento_"],
+                estado_civil: infodict["estado_civil_"],
+                celular_whatsapp: infodict["celular__whatsapp_"],
+                email: infodict["email_"],
+            };
+
+            // 3. Análise Financeira
+            const financeiraSection = form.querySelector('div[class="flex flex-col gap-2"]');
+            if (financeiraSection) {
+                formData.analise_financeira = {
+                    profissao_cargo: infodict["profisso__cargo_"],
+                    vinculo_empregaticio: infodict["vnculo_empregatcio"],
+                    renda_mensal_comprovada: infodict["renda_mensal_comprovada_r_"],
+                    outras_rendas: infodict["outras_rendas_r"],
+                    restricoes_spc_serasa: financeiraSection.querySelector('.checkbox-wrapper:nth-child(1) input').checked,
+                    possui_imovel_proprio: financeiraSection.querySelector('.checkbox-wrapper:nth-child(2) input').checked,
+                    possui_veiculo_quitado: financeiraSection.querySelector('.checkbox-wrapper:nth-child(3) input').checked,
+                };
+            }
+
+            // 4. Garantia
+            const garantiaSection = form.querySelector('section:nth-child(5)');
+            if (garantiaSection) {
+                formData.garantia = {
+                    modalidade: infodict["qual_garantia_ser_apresentada"],
+                };
+
+                const fiadorSection = garantiaSection.querySelector('#fiadorSection');
+                if (garantiaSection.querySelector('#garantiaSelect').value === 'fiador' && fiadorSection) {
+                    formData.garantia.fiador = {
+                        nome_fiador: infodict["nome_do_fiador"],
+                        cpf_fiador: infodict["cpf_do_fiador"],
+                        renda_fiador: infodict["renda_do_fiador_r"],
+                    };
+                }
+            }
+
+            // 5. Locador (Proprietário)
+            const locadorSection = form.querySelector('section:nth-child(6)');
+            if (locadorSection) {
+                formData.locador = {
+                    nome_proprietario: infodict["nome_completo_do_proprietrio"],
+                    cpf_cnpj: infodict["cpfcnpj"],
+                    dados_bancarios: infodict["dados_bancrios_para_repasse"],
+                };
+            }
+
+            // 6. Termos (Autorização de Crédito)
+            const termosSection = form.querySelector('.mb-8 input[type="checkbox"]');
+            if (termosSection) {
+                formData.termos = {
+                    autoriza_consulta_credito: termosSection.checked
+                };
+            }
+
+            return formData;
+        }
+
+        // Simulação de Envio
+        function handleSubmit(event) {
+            event.preventDefault();
+            // Aqui entraria a lógica de envio para o backend (API/PHP/Node)
+
+            // Simula loading no botão
+            const btn = event.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
+            btn.disabled = true;
+
+            const extractedData = extractFormData();
+
+            console.log("Dados do Formulário Extraídos:", extractedData); // Log dos dados no console!
+
+            setTimeout(() => {
+                document.getElementById('successModal').classList.remove('hidden');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                event.target.reset();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }, 1500);
+        }
+
+        // Ativa ou desativa o Debug
+        const DEUBUG = false;
+        // Usado para verificar os valores.
+        function Debug() {
+            if (!DEUBUG) return;
+            function getRandomFloat(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            function moneyFormat(value, currency="BRL"){
+                return new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: currency
+                }).format(value);
+            }
+
+            const aluguel = {
+                min: 1000,
+                max: 10000
+            }
+
+            const cond = {
+                min: 100,
+                max: 1000
+            }
+
+            const renda = {
+                min: 2000,
+                max: 30000
+            }
+
+            const extra_renda = {
+                min: 100,
+                max: 2000
+            }
+
+            const fiador_renda = {
+                min: 1000,
+                max: 50000
+            }
+
+            const dadosFormulario = {
+
+                "imovel": {
+
+                    "endereco_codigo": "Rua das Flores, Nº 1234",
+
+                    "valor_aluguel": moneyFormat(getRandomFloat(aluguel.min, aluguel.max)),
+
+                    "valor_condominio":  moneyFormat(getRandomFloat(cond.min, cond.max)),
+
+                    "finalidade": "Residencial"
+
+                },
+
+                "locatario": {
+
+                    "nome_completo": "Josemar Cunha",
+
+                    "cpf": "556.444.889-77",
+
+                    "rg_orgao_expedidor": "12.345.678-9",
+
+                    "data_nascimento": "2000-11-08",
+
+                    "estado_civil": "Solteiro(a)",
+
+                    "celular_whatsapp": "(67) 99888-7777",
+
+                    "email": "josem@gmail.com"
+
+                },
+
+                "analise_financeira": {
+
+                    "profissao_cargo": "Mecanico",
+
+                    "vinculo_empregaticio": "CLT (Carteira Assinada)",
+
+                    "renda_mensal_comprovada": moneyFormat(getRandomFloat(renda.min, renda.max)),
+
+                    "outras_rendas": moneyFormat(getRandomFloat(extra_renda.min, extra_renda.max)),
+
+                    "restricoes_spc_serasa": Math.random() < 0.3,
+
+                    "possui_imovel_proprio": Math.random() < 0.5,
+
+                    "possui_veiculo_quitado": Math.random() < 0.5
+
+                },
+
+                "garantia": {
+
+                    "modalidade": "Fiador (Pessoa Física)",
+
+                    "fiador": {
+
+                        "nome_fiador": "Carlos Almeida Cunha",
+
+                        "cpf_fiador": "056.654.654-54",
+
+                        "renda_fiador": moneyFormat(getRandomFloat(fiador_renda.min, fiador_renda.max))
+
+                    }
+
+                },
+
+                "locador": {
+
+                    "nome_proprietario": "Paulo Guedes Nogueira",
+
+                    "cpf_cnpj": "645.646.546-54",
+
+                    "dados_bancarios": "0211-9, 38529-9"
+
+                },
+
+                "termos": {
+
+                    "autoriza_consulta_credito": true
+
+                }
+
+            }
+
+            console.log("Dados Submetidos (DEBUG):",JSON.stringify(dadosFormulario, null, 4));
+            const resultado = avaliarLocacao(dadosFormulario);
+            // Exibindo no console
+            console.log(JSON.stringify(resultado, null, 4));
+        }
+
+        function closeModal() {
+            document.getElementById('successModal').classList.add('hidden');
+        }
+
+        // Inicializa o estado do fiador
+        toggleFiador();
+    </script>
+</body>
+
+</html>
